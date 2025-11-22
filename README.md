@@ -486,15 +486,13 @@ Contributions are welcome! This project maintains high standards:
 
 ## 📜 License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
+This project is licensed under the APACHE 2.0 License. See [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 👨‍💻 Author
 
-**Senior Cybersecurity Engineer**
-
-Built as a portfolio demonstration of production-grade Python development for SOC environments.
+**Anamitra Sarkar
 
 ---
 
