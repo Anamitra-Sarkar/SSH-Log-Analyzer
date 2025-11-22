@@ -199,11 +199,13 @@ class LogParser:
         for pattern in patterns:
             match = pattern.search(line)
             if match:
+                port_str = match.groupdict().get('port')
+                port = int(port_str) if port_str else None
                 return FailedLoginAttempt(
                     timestamp=match.group('timestamp'),
                     ip_address=match.group('ip'),
                     username=match.groupdict().get('username'),
-                    port=int(match.group('port')) if 'port' in match.groupdict() and match.group('port') else None,
+                    port=port,
                     log_line=line.strip()
                 )
         
@@ -576,7 +578,7 @@ Examples:
   %(prog)s --file auth.log --threshold 5 --output csv --output-file threats.csv
   %(prog)s --file auth.log --threshold 20 --output json --output-file report.json
 
-For more information, visit: https://github.com/yourusername/ssh-log-sentinel
+For more information, visit: https://github.com/Anamitra-Sarkar/SSH-Log-Analyzer
         """
     )
     
@@ -634,8 +636,8 @@ def main() -> int:
         # Always print console report
         sentinel.reporter.print_console_report(threat_reports, statistics)
         
-        # Export to requested format(s)
-        if args.output and threat_reports:
+        # Export to requested format(s) - even if empty for consistency
+        if args.output:
             if args.output in ['csv', 'both']:
                 csv_file = args.output_file if args.output == 'csv' else f"{args.output_file or 'threats'}.csv"
                 sentinel.reporter.export_to_csv(threat_reports, csv_file)
