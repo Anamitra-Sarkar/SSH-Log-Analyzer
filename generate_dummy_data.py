@@ -13,6 +13,7 @@ Python Version: 3.8+
 
 import argparse
 import random
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Tuple
@@ -386,5 +387,4 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-    import sys
     sys.exit(main())

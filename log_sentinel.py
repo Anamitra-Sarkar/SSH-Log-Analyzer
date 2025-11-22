@@ -123,7 +123,7 @@ class LogParser:
         Validate that the log file exists and is readable.
         
         Raises:
-            FileNotFoundError: If file doesn't exist
+            FileNotFoundError: If file doesn't exist or path is not a file
             PermissionError: If file is not readable
         """
         if not self.log_file_path.exists():
@@ -134,7 +134,7 @@ class LogParser:
         if not self.log_file_path.is_file():
             error_msg = f"Path is not a file: {self.log_file_path}"
             logger.error(error_msg)
-            raise ValueError(error_msg)
+            raise FileNotFoundError(error_msg)
         
         if not self.log_file_path.stat().st_size > 0:
             logger.warning(f"Log file is empty: {self.log_file_path}")
