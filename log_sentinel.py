@@ -80,7 +80,6 @@ class LogParser:
     """
     
     # Regex patterns for different log formats
-    # Regex patterns for different log formats
     FAILED_PASSWORD_PATTERN = re.compile(
         r'(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+).*?'
         r'Failed password for (?:invalid user )?(?P<username>\S+) from '
@@ -104,8 +103,10 @@ class LogParser:
         r'.*?preauth'
     )
     
-    # Pre-computed tuple of (pattern, quick_filter_string) for efficient matching
-    # The quick_filter_string is used for fast string containment checks before regex
+    # Pre-computed tuple of (pattern, quick_filter_string) for efficient matching.
+    # Each quick_filter_string is a substring that MUST appear in any line matching
+    # the corresponding regex pattern. This allows fast O(n) string containment
+    # checks to skip expensive regex matching on non-matching lines.
     PATTERNS_WITH_FILTERS: Tuple[Tuple[re.Pattern, str], ...] = (
         (FAILED_PASSWORD_PATTERN, 'Failed password'),
         (FAILED_AUTH_PATTERN, 'authentication failure'),
@@ -212,8 +213,8 @@ class LogParser:
                 groups = match.groupdict()
                 port_str = groups.get('port')
                 return FailedLoginAttempt(
-                    timestamp=groups.get('timestamp', ''),
-                    ip_address=groups.get('ip', ''),
+                    timestamp=groups['timestamp'],
+                    ip_address=groups['ip'],
                     username=groups.get('username'),
                     port=int(port_str) if port_str else None,
                     log_line=line.strip()
