@@ -80,6 +80,7 @@ class LogParser:
     """
     
     # Regex patterns for different log formats
+    # Regex patterns for different log formats
     FAILED_PASSWORD_PATTERN = re.compile(
         r'(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+).*?'
         r'Failed password for (?:invalid user )?(?P<username>\S+) from '
@@ -101,6 +102,15 @@ class LogParser:
         r'(?P<timestamp>\w+\s+\d+\s+\d+:\d+:\d+).*?'
         r'Connection closed by (?:authenticating user \S+ )?(?P<ip>\d+\.\d+\.\d+\.\d+)'
         r'.*?preauth'
+    )
+    
+    # Pre-computed tuple of (pattern, quick_filter_string) for efficient matching
+    # The quick_filter_string is used for fast string containment checks before regex
+    PATTERNS_WITH_FILTERS: Tuple[Tuple[re.Pattern, str], ...] = (
+        (FAILED_PASSWORD_PATTERN, 'Failed password'),
+        (FAILED_AUTH_PATTERN, 'authentication failure'),
+        (INVALID_USER_PATTERN, 'Invalid user'),
+        (CONNECTION_CLOSED_PATTERN, 'preauth'),
     )
     
     def __init__(self, log_file_path: str):
@@ -181,6 +191,9 @@ class LogParser:
         """
         Parse a single log line to extract failed login information.
         
+        Uses quick string containment checks before expensive regex operations
+        to improve performance.
+        
         Args:
             line: A single line from the log file
             
@@ -188,24 +201,21 @@ class LogParser:
             FailedLoginAttempt object if the line indicates a failed attempt,
             None otherwise
         """
-        # Try each pattern in order of specificity
-        patterns = [
-            self.FAILED_PASSWORD_PATTERN,
-            self.FAILED_AUTH_PATTERN,
-            self.INVALID_USER_PATTERN,
-            self.CONNECTION_CLOSED_PATTERN
-        ]
-        
-        for pattern in patterns:
+        # Try each pattern with quick string filter check first
+        for pattern, quick_filter in self.PATTERNS_WITH_FILTERS:
+            # Fast string containment check before expensive regex
+            if quick_filter not in line:
+                continue
             match = pattern.search(line)
             if match:
-                port_str = match.groupdict().get('port')
-                port = int(port_str) if port_str else None
+                # Cache groupdict to avoid calling it twice
+                groups = match.groupdict()
+                port_str = groups.get('port')
                 return FailedLoginAttempt(
-                    timestamp=match.group('timestamp'),
-                    ip_address=match.group('ip'),
-                    username=match.groupdict().get('username'),
-                    port=port,
+                    timestamp=groups.get('timestamp', ''),
+                    ip_address=groups.get('ip', ''),
+                    username=groups.get('username'),
+                    port=int(port_str) if port_str else None,
                     log_line=line.strip()
                 )
         
